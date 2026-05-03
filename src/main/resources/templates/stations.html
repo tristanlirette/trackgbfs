@@ -424,28 +424,42 @@
             if (!resp.ok) throw new Error('HTTP ' + resp.status);
             const data = await resp.json();
             clearChildren(tbody);
+            const COL_COUNT = 12;
+            const colHasData = new Array(COL_COUNT).fill(false);
             data.forEach(s => {
                 const tr = document.createElement('tr');
                 const values = [
-                    s.stationId,
+                    s.station_id,
                     s.name,
-                    s.shortName,
+                    s.short_name,
                     s.lat != null ? s.lat.toFixed(5) : '',
                     s.lon != null ? s.lon.toFixed(5) : '',
                     s.address,
-                    s.crossStreet,
-                    s.regionId,
-                    s.postCode,
-                    Array.isArray(s.rentalMethods) ? s.rentalMethods.join(', ') : '',
+                    s.cross_street,
+                    s.region_id,
+                    s.post_code,
+                    Array.isArray(s.rental_methods) ? s.rental_methods.join(', ') : '',
                     s.capacity != null ? String(s.capacity) : '',
-                    formatTs(s.observedAt),
+                    formatTs(s.observed_at),
                 ];
-                values.forEach(val => {
+                values.forEach((val, ci) => {
                     const td = document.createElement('td');
-                    td.textContent = val ?? '';
+                    const text = val ?? '';
+                    td.textContent = text;
+                    if (text !== '') colHasData[ci] = true;
                     tr.appendChild(td);
                 });
                 tbody.appendChild(tr);
+            });
+            // Hide columns with no data in any row
+            const ths = document.querySelectorAll('#info-table thead th');
+            ths.forEach((th, ci) => {
+                if (!colHasData[ci]) {
+                    th.style.display = 'none';
+                    tbody.querySelectorAll('tr').forEach(row => {
+                        if (row.cells[ci]) row.cells[ci].style.display = 'none';
+                    });
+                }
             });
             infoLoaded = true;
             infoSorter.wireButtons();
