@@ -2,59 +2,300 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8"/>
-    <title>Station Status</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>TrackGBFS — Station Status</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Syncopate:wght@700&display=swap" rel="stylesheet">
     <style>
-        th button.sort-btn {
-            margin-left: 6px;
-            padding: 2px 7px;
-            background: #334155;
-            border: 1px solid #475569;
-            color: #94a3b8;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 11px;
-            font-family: inherit;
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:            #06080d;
+            --surface:       #0b0f1a;
+            --surface-row:   #0e1420;
+            --surface-alt:   #0a0e18;
+            --border:        #182030;
+            --border-head:   #1e2d42;
+            --text:          #c4d4e4;
+            --text-muted:    #3d5268;
+            --text-dim:      #243040;
+            --accent:        #00c8f0;
+            --accent-glow:   rgba(0, 200, 240, 0.12);
+            --accent-dim:    rgba(0, 200, 240, 0.35);
+            --green:         #2dd4a0;
+            --green-bg:      rgba(45, 212, 160, 0.10);
+            --red:           #f87171;
+            --red-bg:        rgba(248, 113, 113, 0.10);
+            --head-bg:       #090c14;
         }
-        th button.sort-btn.active {
-            background: #2563eb;
-            border-color: #3b82f6;
-            color: #fff;
+
+        html, body {
+            height: 100%;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* ── Top bar ── */
+        .topbar {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 18px 32px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border-head);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .topbar-logo {
+            font-family: 'Syncopate', sans-serif;
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: 0.18em;
+            color: var(--accent);
+            text-transform: uppercase;
+        }
+
+        .topbar-sep {
+            width: 1px;
+            height: 20px;
+            background: var(--border-head);
+        }
+
+        .topbar-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .topbar-live {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 11px;
+            color: var(--text-muted);
+            letter-spacing: 0.1em;
+        }
+
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--green);
+            animation: pulse 2.4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.35; }
+        }
+
+        /* ── Main content ── */
+        .main {
+            flex: 1;
+            padding: 28px 32px 48px;
+            overflow-x: auto;
+        }
+
+        /* ── Table wrapper ── */
+        .table-wrap {
+            border: 1px solid var(--border-head);
+            border-radius: 6px;
+            overflow: hidden;
+            min-width: max-content;
+        }
+
+        /* ── Table ── */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead tr {
+            background: var(--head-bg);
+            border-bottom: 1px solid var(--border-head);
+        }
+
+        th {
+            padding: 11px 16px;
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 400;
+            white-space: nowrap;
+            border-right: 1px solid var(--border);
+            text-align: left;
+        }
+
+        th:last-child { border-right: none; }
+
+        tbody tr {
+            border-bottom: 1px solid var(--border);
+            background: var(--surface-alt);
+            transition: background 80ms ease;
+        }
+
+        tbody tr:nth-child(even) {
+            background: var(--surface-row);
+        }
+
+        tbody tr:last-child { border-bottom: none; }
+
+        tbody tr:hover {
+            background: #121d2e;
+        }
+
+        td {
+            padding: 10px 16px;
+            font-size: 13px;
+            color: var(--text);
+            white-space: nowrap;
+            border-right: 1px solid var(--border);
+        }
+
+        td:last-child { border-right: none; }
+
+        /* ── Boolean badges ── */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            letter-spacing: 0.08em;
+        }
+
+        .badge::before {
+            content: '';
+            display: block;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+        }
+
+        .badge-true {
+            background: var(--green-bg);
+            color: var(--green);
+            border: 1px solid rgba(45, 212, 160, 0.2);
+        }
+
+        .badge-true::before { background: var(--green); }
+
+        .badge-false {
+            background: var(--red-bg);
+            color: var(--red);
+            border: 1px solid rgba(248, 113, 113, 0.18);
+        }
+
+        .badge-false::before { background: var(--red); }
+
+        /* ── Sort buttons ── */
+        .sort-btn {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 2px 6px;
+            background: transparent;
+            border: 1px solid var(--border-head);
+            color: var(--text-dim);
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 10px;
+            font-family: inherit;
+            letter-spacing: 0.05em;
+            vertical-align: middle;
+            transition: background 120ms, border-color 120ms, color 120ms, box-shadow 120ms;
+        }
+
+        .sort-btn:hover {
+            border-color: var(--accent-dim);
+            color: var(--accent);
+        }
+
+        .sort-btn.active {
+            background: var(--accent-glow);
+            border-color: var(--accent-dim);
+            color: var(--accent);
+            box-shadow: 0 0 8px var(--accent-glow);
         }
     </style>
 </head>
 <body>
-<h1>Station Status</h1>
-<table id="station-table">
-    <thead>
-        <tr>
-            <th>Station ID <button class="sort-btn" data-col="0">—</button></th>
-            <th>Bikes Available <button class="sort-btn" data-col="1">—</button></th>
-            <th>Bikes Disabled <button class="sort-btn" data-col="2">—</button></th>
-            <th>Docks Available <button class="sort-btn" data-col="3">—</button></th>
-            <th>Docks Disabled <button class="sort-btn" data-col="4">—</button></th>
-            <th>Installed <button class="sort-btn" data-col="5">—</button></th>
-            <th>Renting <button class="sort-btn" data-col="6">—</button></th>
-            <th>Returning <button class="sort-btn" data-col="7">—</button></th>
-            <th>Last Reported (UTC) <button class="sort-btn" data-col="8">—</button></th>
-            <th>Observed At (UTC) <button class="sort-btn" data-col="9">—</button></th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr th:each="row : ${rows}">
-            <td th:text="${row.stationId}"></td>
-            <td th:text="${row.numBikesAvailable}"></td>
-            <td th:text="${row.numBikesDisabled}"></td>
-            <td th:text="${row.numDocksAvailable}"></td>
-            <td th:text="${row.numDocksDisabled}"></td>
-            <td th:text="${row.isInstalled}"></td>
-            <td th:text="${row.isRenting}"></td>
-            <td th:text="${row.isReturning}"></td>
-            <td th:text="${row.lastReported}"></td>
-            <td th:text="${row.observedAt}"></td>
-        </tr>
-    </tbody>
-</table>
+
+<div class="topbar">
+    <span class="topbar-logo">TrackGBFS</span>
+    <div class="topbar-sep"></div>
+    <span class="topbar-label">Station Status</span>
+    <div class="topbar-live">
+        <span class="live-dot"></span>
+        LIVE
+    </div>
+</div>
+
+<div class="main">
+    <div class="table-wrap">
+        <table id="station-table">
+            <thead>
+                <tr>
+                    <th>Station ID <button class="sort-btn" data-col="0">—</button></th>
+                    <th>Bikes Avail <button class="sort-btn" data-col="1">—</button></th>
+                    <th>Bikes Disabled <button class="sort-btn" data-col="2">—</button></th>
+                    <th>Docks Avail <button class="sort-btn" data-col="3">—</button></th>
+                    <th>Docks Disabled <button class="sort-btn" data-col="4">—</button></th>
+                    <th>Installed <button class="sort-btn" data-col="5">—</button></th>
+                    <th>Renting <button class="sort-btn" data-col="6">—</button></th>
+                    <th>Returning <button class="sort-btn" data-col="7">—</button></th>
+                    <th>Last Reported (UTC) <button class="sort-btn" data-col="8">—</button></th>
+                    <th>Observed At (UTC) <button class="sort-btn" data-col="9">—</button></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="row : ${rows}">
+                    <td th:text="${row.stationId}"></td>
+                    <td th:text="${row.numBikesAvailable}"></td>
+                    <td th:text="${row.numBikesDisabled}"></td>
+                    <td th:text="${row.numDocksAvailable}"></td>
+                    <td th:text="${row.numDocksDisabled}"></td>
+                    <td th:text="${row.isInstalled}"></td>
+                    <td th:text="${row.isRenting}"></td>
+                    <td th:text="${row.isReturning}"></td>
+                    <td th:text="${row.lastReported}"></td>
+                    <td th:text="${row.observedAt}"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
 <script>
+    // Boolean badge rendering
+    const BOOL_COLS = [5, 6, 7];
+    document.querySelectorAll('#station-table tbody tr').forEach(row => {
+        BOOL_COLS.forEach(ci => {
+            const cell = row.cells[ci];
+            const val = cell.textContent.trim();
+            if (val === 'true' || val === 'false') {
+                const badge = document.createElement('span');
+                badge.className = 'badge badge-' + val;
+                badge.textContent = val;
+                cell.textContent = '';
+                cell.appendChild(badge);
+            }
+        });
+    });
+
+    // Sort logic
     const sortOrder = [];
 
     function toggleColumn(colIndex) {
@@ -111,5 +352,6 @@
         btn.addEventListener('click', () => toggleColumn(parseInt(btn.dataset.col, 10)));
     });
 </script>
+
 </body>
 </html>
