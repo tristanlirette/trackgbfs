@@ -296,6 +296,25 @@
 
         .modal-body { overflow: auto; flex: 1; }
 
+        .modal-info:not(:empty) {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px 36px;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-head);
+        }
+
+        .modal-info-field { display: flex; flex-direction: column; gap: 4px; }
+
+        .modal-info-label {
+            font-size: 9px;
+            letter-spacing: 0.14em;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .modal-info-value { font-size: 13px; color: var(--text); }
+
         #history-table { min-width: max-content; }
     </style>
 </head>
@@ -386,6 +405,7 @@
             <button class="modal-close" id="modal-close-btn">&#x2715;</button>
         </div>
         <div class="modal-body">
+            <div id="modal-station-info" class="modal-info"></div>
             <table id="history-table">
                 <thead>
                     <tr>
@@ -584,29 +604,72 @@
     }
 
     const historyCache = {};
+    const stationInfoCache = {};
+
+    async function loadCached(cache, key, url) {
+        if (cache[key]) return cache[key];
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const data = await resp.json();
+        cache[key] = data;
+        return data;
+    }
 
     async function openHistory(stationId) {
         document.getElementById('modal-station-id').textContent = stationId;
-        const modal = document.getElementById('history-modal');
-        modal.hidden = false;
+        document.getElementById('history-modal').hidden = false;
+
+        const infoContainer = document.getElementById('modal-station-info');
         const tbody = document.querySelector('#history-table tbody');
+        clearChildren(infoContainer);
         clearChildren(tbody);
-        if (historyCache[stationId]) {
-            renderHistory(tbody, historyCache[stationId]);
-            return;
-        }
         tbody.appendChild(makeStateRow('LOADING...', false, 9));
-        try {
-            const resp = await fetch('/station/status/' + encodeURIComponent(stationId) + '/history');
-            if (!resp.ok) throw new Error('HTTP ' + resp.status);
-            const data = await resp.json();
-            historyCache[stationId] = data;
-            clearChildren(tbody);
-            renderHistory(tbody, data);
-        } catch (e) {
-            clearChildren(tbody);
+
+        const enc = encodeURIComponent(stationId);
+        const [infoResult, historyResult] = await Promise.allSettled([
+            loadCached(stationInfoCache, stationId, '/station/information/' + enc),
+            loadCached(historyCache,     stationId, '/station/status/'      + enc + '/history'),
+        ]);
+
+        if (infoResult.status === 'fulfilled') {
+            renderStationInfo(infoContainer, infoResult.value);
+        }
+        clearChildren(tbody);
+        if (historyResult.status === 'fulfilled') {
+            renderHistory(tbody, historyResult.value);
+        } else {
             tbody.appendChild(makeStateRow('Failed to load history.', true, 9));
         }
+    }
+
+    function renderStationInfo(container, info) {
+        const fields = [
+            ['Name',           info.name],
+            ['Short Name',     info.short_name],
+            ['Address',        info.address],
+            ['Cross Street',   info.cross_street],
+            ['Region',         info.region_id],
+            ['Post Code',      info.post_code],
+            ['Capacity',       info.capacity != null ? String(info.capacity) : null],
+            ['Coordinates',    info.lat != null && info.lon != null
+                                 ? info.lat.toFixed(5) + ', ' + info.lon.toFixed(5) : null],
+            ['Rental Methods', Array.isArray(info.rental_methods) && info.rental_methods.length > 0
+                                 ? info.rental_methods.join(', ') : null],
+        ];
+        fields.forEach(([label, value]) => {
+            if (!value) return;
+            const field = document.createElement('div');
+            field.className = 'modal-info-field';
+            const lbl = document.createElement('span');
+            lbl.className = 'modal-info-label';
+            lbl.textContent = label;
+            const val = document.createElement('span');
+            val.className = 'modal-info-value';
+            val.textContent = value;
+            field.appendChild(lbl);
+            field.appendChild(val);
+            container.appendChild(field);
+        });
     }
 
     function renderHistory(tbody, data) {
