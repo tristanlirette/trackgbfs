@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>TrackGBFS — Station Status</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Syncopate:wght@700&display=swap" rel="stylesheet">
+    <title>TrackGBFS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&amp;family=Syncopate:wght@700&amp;display=swap" rel="stylesheet"/>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -36,23 +36,20 @@
             font-family: 'Share Tech Mono', 'Courier New', monospace;
         }
 
-        body {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
+        body { display: flex; flex-direction: column; min-height: 100vh; }
 
         /* ── Top bar ── */
         .topbar {
             display: flex;
             align-items: center;
             gap: 20px;
-            padding: 18px 32px;
+            padding: 0 32px;
             background: var(--surface);
             border-bottom: 1px solid var(--border-head);
             position: sticky;
             top: 0;
             z-index: 10;
+            height: 52px;
         }
 
         .topbar-logo {
@@ -62,19 +59,43 @@
             letter-spacing: 0.18em;
             color: var(--accent);
             text-transform: uppercase;
+            flex-shrink: 0;
         }
 
         .topbar-sep {
             width: 1px;
             height: 20px;
             background: var(--border-head);
+            flex-shrink: 0;
         }
 
-        .topbar-label {
-            font-size: 11px;
+        /* ── Tabs (inline in topbar) ── */
+        .tabs {
+            display: flex;
+            align-items: stretch;
+            height: 100%;
+        }
+
+        .tab {
+            padding: 0 18px;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
             color: var(--text-muted);
+            font-family: inherit;
+            font-size: 11px;
             letter-spacing: 0.12em;
             text-transform: uppercase;
+            cursor: pointer;
+            transition: color 120ms, border-color 120ms;
+            white-space: nowrap;
+        }
+
+        .tab:hover { color: var(--text); }
+
+        .tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
         }
 
         .topbar-live {
@@ -85,6 +106,7 @@
             font-size: 11px;
             color: var(--text-muted);
             letter-spacing: 0.1em;
+            flex-shrink: 0;
         }
 
         .live-dot {
@@ -95,17 +117,10 @@
             animation: pulse 2.4s ease-in-out infinite;
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50%       { opacity: 0.35; }
-        }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 
-        /* ── Main content ── */
-        .main {
-            flex: 1;
-            padding: 28px 32px 48px;
-            overflow-x: auto;
-        }
+        /* ── Main ── */
+        .main { flex: 1; padding: 28px 32px 48px; overflow-x: auto; }
 
         /* ── Table wrapper ── */
         .table-wrap {
@@ -115,16 +130,9 @@
             min-width: max-content;
         }
 
-        /* ── Table ── */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
+        table { width: 100%; border-collapse: collapse; }
 
-        thead tr {
-            background: var(--head-bg);
-            border-bottom: 1px solid var(--border-head);
-        }
+        thead tr { background: var(--head-bg); border-bottom: 1px solid var(--border-head); }
 
         th {
             padding: 11px 16px;
@@ -146,15 +154,9 @@
             transition: background 80ms ease;
         }
 
-        tbody tr:nth-child(even) {
-            background: var(--surface-row);
-        }
-
+        tbody tr:nth-child(even) { background: var(--surface-row); }
         tbody tr:last-child { border-bottom: none; }
-
-        tbody tr:hover {
-            background: #121d2e;
-        }
+        tbody tr:hover { background: #121d2e; }
 
         td {
             padding: 10px 16px;
@@ -185,20 +187,9 @@
             border-radius: 50%;
         }
 
-        .badge-true {
-            background: var(--green-bg);
-            color: var(--green);
-            border: 1px solid rgba(45, 212, 160, 0.2);
-        }
-
-        .badge-true::before { background: var(--green); }
-
-        .badge-false {
-            background: var(--red-bg);
-            color: var(--red);
-            border: 1px solid rgba(248, 113, 113, 0.18);
-        }
-
+        .badge-true  { background: var(--green-bg); color: var(--green); border: 1px solid rgba(45,212,160,0.2); }
+        .badge-true::before  { background: var(--green); }
+        .badge-false { background: var(--red-bg); color: var(--red); border: 1px solid rgba(248,113,113,0.18); }
         .badge-false::before { background: var(--red); }
 
         /* ── Sort buttons ── */
@@ -218,16 +209,22 @@
             transition: background 120ms, border-color 120ms, color 120ms, box-shadow 120ms;
         }
 
-        .sort-btn:hover {
-            border-color: var(--accent-dim);
-            color: var(--accent);
-        }
+        .sort-btn:hover { border-color: var(--accent-dim); color: var(--accent); }
 
         .sort-btn.active {
             background: var(--accent-glow);
             border-color: var(--accent-dim);
             color: var(--accent);
             box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        /* ── Loading / error state ── */
+        .state-row td {
+            text-align: center;
+            padding: 32px;
+            color: var(--text-muted);
+            font-size: 12px;
+            letter-spacing: 0.1em;
         }
     </style>
 </head>
@@ -236,7 +233,10 @@
 <div class="topbar">
     <span class="topbar-logo">TrackGBFS</span>
     <div class="topbar-sep"></div>
-    <span class="topbar-label">Station Status</span>
+    <nav class="tabs">
+        <button class="tab active" data-tab="status">Station Status</button>
+        <button class="tab" data-tab="information">Station Information</button>
+    </nav>
     <div class="topbar-live">
         <span class="live-dot"></span>
         LIVE
@@ -244,8 +244,10 @@
 </div>
 
 <div class="main">
-    <div class="table-wrap">
-        <table id="station-table">
+
+    <!-- Station Status panel -->
+    <div id="panel-status" class="table-wrap">
+        <table id="status-table">
             <thead>
                 <tr>
                     <th>Station ID <button class="sort-btn" data-col="0">—</button></th>
@@ -276,81 +278,203 @@
             </tbody>
         </table>
     </div>
+
+    <!-- Station Information panel -->
+    <div id="panel-information" class="table-wrap" hidden="hidden">
+        <table id="info-table">
+            <thead>
+                <tr>
+                    <th>Station ID <button class="sort-btn" data-col="0">—</button></th>
+                    <th>Name <button class="sort-btn" data-col="1">—</button></th>
+                    <th>Short Name <button class="sort-btn" data-col="2">—</button></th>
+                    <th>Lat <button class="sort-btn" data-col="3">—</button></th>
+                    <th>Lon <button class="sort-btn" data-col="4">—</button></th>
+                    <th>Address <button class="sort-btn" data-col="5">—</button></th>
+                    <th>Cross Street <button class="sort-btn" data-col="6">—</button></th>
+                    <th>Region ID <button class="sort-btn" data-col="7">—</button></th>
+                    <th>Post Code <button class="sort-btn" data-col="8">—</button></th>
+                    <th>Rental Methods <button class="sort-btn" data-col="9">—</button></th>
+                    <th>Capacity <button class="sort-btn" data-col="10">—</button></th>
+                    <th>Observed At (UTC) <button class="sort-btn" data-col="11">—</button></th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
 </div>
 
-<script>
-    // Boolean badge rendering
-    const BOOL_COLS = [5, 6, 7];
-    document.querySelectorAll('#station-table tbody tr').forEach(row => {
-        BOOL_COLS.forEach(ci => {
+<script>//<![CDATA[
+    // ── Utilities ────────────────────────────────────────────────────────────
+
+    function formatTs(epoch) {
+        if (epoch == null) return '';
+        const d = new Date(epoch * 1000);
+        return d.getUTCFullYear() + '-' +
+            String(d.getUTCMonth() + 1).padStart(2, '0') + '-' +
+            String(d.getUTCDate()).padStart(2, '0') + ' ' +
+            String(d.getUTCHours()).padStart(2, '0') + ':' +
+            String(d.getUTCMinutes()).padStart(2, '0');
+    }
+
+    function clearChildren(el) {
+        while (el.firstChild) el.removeChild(el.firstChild);
+    }
+
+    // ── Boolean badge rendering (station status) ─────────────────────────────
+
+    document.querySelectorAll('#status-table tbody tr').forEach(row => {
+        [5, 6, 7].forEach(ci => {
             const cell = row.cells[ci];
             const val = cell.textContent.trim();
             if (val === 'true' || val === 'false') {
+                clearChildren(cell);
                 const badge = document.createElement('span');
                 badge.className = 'badge badge-' + val;
                 badge.textContent = val;
-                cell.textContent = '';
                 cell.appendChild(badge);
             }
         });
     });
 
-    // Sort logic
-    const sortOrder = [];
+    // ── Generic table sorter ─────────────────────────────────────────────────
 
-    function toggleColumn(colIndex) {
-        const existing = sortOrder.find(s => s.colIndex === colIndex);
-        if (!existing) {
-            sortOrder.push({ colIndex, dir: 'asc' });
-        } else if (existing.dir === 'asc') {
-            existing.dir = 'desc';
-        } else {
-            sortOrder.splice(sortOrder.indexOf(existing), 1);
-        }
-        renderButtons();
-        applySort();
-    }
+    function makeTableSorter(tableId) {
+        const sortOrder = [];
 
-    function renderButtons() {
-        document.querySelectorAll('.sort-btn').forEach(btn => {
-            const col = parseInt(btn.dataset.col, 10);
-            const entry = sortOrder.find(s => s.colIndex === col);
-            if (!entry) {
-                btn.textContent = '—';
-                btn.classList.remove('active');
+        function toggle(colIndex) {
+            const existing = sortOrder.find(s => s.colIndex === colIndex);
+            if (!existing) {
+                sortOrder.push({ colIndex, dir: 'asc' });
+            } else if (existing.dir === 'asc') {
+                existing.dir = 'desc';
             } else {
-                const priority = sortOrder.indexOf(entry) + 1;
-                btn.textContent = (entry.dir === 'asc' ? '↑' : '↓') + priority;
-                btn.classList.add('active');
+                sortOrder.splice(sortOrder.indexOf(existing), 1);
             }
-        });
-    }
+            renderButtons();
+            applySort();
+        }
 
-    function applySort() {
-        const tbody = document.querySelector('#station-table tbody');
-        const rows = Array.from(tbody.rows);
-        rows.sort((a, b) => {
-            for (const { colIndex, dir } of sortOrder) {
-                const aText = a.cells[colIndex].textContent.trim();
-                const bText = b.cells[colIndex].textContent.trim();
-                const aNum = parseFloat(aText);
-                const bNum = parseFloat(bText);
-                let cmp;
-                if (!isNaN(aNum) && !isNaN(bNum)) {
-                    cmp = aNum - bNum;
+        function renderButtons() {
+            document.querySelectorAll('#' + tableId + ' .sort-btn').forEach(btn => {
+                const col = parseInt(btn.dataset.col, 10);
+                const entry = sortOrder.find(s => s.colIndex === col);
+                if (!entry) {
+                    btn.textContent = '—';
+                    btn.classList.remove('active');
                 } else {
-                    cmp = aText.localeCompare(bText);
+                    btn.textContent = (entry.dir === 'asc' ? '↑' : '↓') + (sortOrder.indexOf(entry) + 1);
+                    btn.classList.add('active');
                 }
-                if (cmp !== 0) return dir === 'asc' ? cmp : -cmp;
-            }
-            return 0;
-        });
-        rows.forEach(row => tbody.appendChild(row));
+            });
+        }
+
+        function applySort() {
+            const tbody = document.querySelector('#' + tableId + ' tbody');
+            const rows = Array.from(tbody.rows);
+            rows.sort((a, b) => {
+                for (const { colIndex, dir } of sortOrder) {
+                    const aText = a.cells[colIndex].textContent.trim();
+                    const bText = b.cells[colIndex].textContent.trim();
+                    const aNum = parseFloat(aText);
+                    const bNum = parseFloat(bText);
+                    const cmp = (!isNaN(aNum) && !isNaN(bNum)) ? aNum - bNum : aText.localeCompare(bText);
+                    if (cmp !== 0) return dir === 'asc' ? cmp : -cmp;
+                }
+                return 0;
+            });
+            rows.forEach(row => tbody.appendChild(row));
+        }
+
+        function wireButtons() {
+            document.querySelectorAll('#' + tableId + ' .sort-btn').forEach(btn => {
+                btn.addEventListener('click', () => toggle(parseInt(btn.dataset.col, 10)));
+            });
+        }
+
+        return { wireButtons };
     }
 
-    document.querySelectorAll('.sort-btn').forEach(btn => {
-        btn.addEventListener('click', () => toggleColumn(parseInt(btn.dataset.col, 10)));
+    const statusSorter = makeTableSorter('status-table');
+    statusSorter.wireButtons();
+
+    const infoSorter = makeTableSorter('info-table');
+
+    // ── Station Information fetch ─────────────────────────────────────────────
+
+    let infoLoaded = false;
+
+    function makeStateRow(message, isError, colSpan) {
+        const tr = document.createElement('tr');
+        tr.className = 'state-row';
+        const td = document.createElement('td');
+        td.colSpan = colSpan;
+        if (isError) td.style.color = 'var(--red)';
+        td.textContent = message;
+        tr.appendChild(td);
+        return tr;
+    }
+
+    async function loadStationInformation() {
+        const tbody = document.querySelector('#info-table tbody');
+        clearChildren(tbody);
+        tbody.appendChild(makeStateRow('LOADING...', false, 12));
+        try {
+            const resp = await fetch('/station/information');
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            const data = await resp.json();
+            clearChildren(tbody);
+            data.forEach(s => {
+                const tr = document.createElement('tr');
+                const values = [
+                    s.stationId,
+                    s.name,
+                    s.shortName,
+                    s.lat != null ? s.lat.toFixed(5) : '',
+                    s.lon != null ? s.lon.toFixed(5) : '',
+                    s.address,
+                    s.crossStreet,
+                    s.regionId,
+                    s.postCode,
+                    Array.isArray(s.rentalMethods) ? s.rentalMethods.join(', ') : '',
+                    s.capacity != null ? String(s.capacity) : '',
+                    formatTs(s.observedAt),
+                ];
+                values.forEach(val => {
+                    const td = document.createElement('td');
+                    td.textContent = val ?? '';
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+            infoLoaded = true;
+            infoSorter.wireButtons();
+        } catch (e) {
+            clearChildren(tbody);
+            tbody.appendChild(makeStateRow('Failed to load station information.', true, 12));
+        }
+    }
+
+    // ── Tab switching ────────────────────────────────────────────────────────
+
+    const panels = {
+        status:      document.getElementById('panel-status'),
+        information: document.getElementById('panel-information'),
+    };
+
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            const target = tab.dataset.tab;
+            Object.values(panels).forEach(p => { p.hidden = true; });
+            panels[target].hidden = false;
+            if (target === 'information' && !infoLoaded) {
+                loadStationInformation();
+            }
+        });
     });
+//]]>
 </script>
 
 </body>
