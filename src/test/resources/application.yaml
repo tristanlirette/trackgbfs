@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: trackgbfs
+  datasource:
+    url: "jdbc:sqlite::memory:"
+    hikari:
+      maximum-pool-size: 1
+  sql:
+    init:
+      mode: always
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+
+trackgbfs:
+  api:
+    cache-ttl: 0s
+  feed:
+    base-url: https://example.test/gbfs/v1
+    language: en
+  poll:
+    default-min-interval: 30s

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Station Status</title>
+</head>
+<body>
+<h1>Station Status</h1>
+<table>
+    <thead>
+        <tr>
+            <th>Station ID</th>
+            <th>Bikes Available</th>
+            <th>Bikes Disabled</th>
+            <th>Docks Available</th>
+            <th>Docks Disabled</th>
+            <th>Installed</th>
+            <th>Renting</th>
+            <th>Returning</th>
+            <th>Last Reported (UTC)</th>
+            <th>Observed At (UTC)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr th:each="row : ${rows}">
+            <td th:text="${row.stationId}"></td>
+            <td th:text="${row.numBikesAvailable}"></td>
+            <td th:text="${row.numBikesDisabled}"></td>
+            <td th:text="${row.numDocksAvailable}"></td>
+            <td th:text="${row.numDocksDisabled}"></td>
+            <td th:text="${row.isInstalled}"></td>
+            <td th:text="${row.isRenting}"></td>
+            <td th:text="${row.isReturning}"></td>
+            <td th:text="${row.lastReported}"></td>
+            <td th:text="${row.observedAt}"></td>
+        </tr>
+    </tbody>
+</table>
+</body>
+</html>

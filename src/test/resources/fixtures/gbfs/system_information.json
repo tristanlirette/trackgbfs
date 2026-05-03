@@ -1,0 +1,33 @@
+{
+  "last_updated": 1777131935,
+  "ttl": 2,
+  "data": {
+    "system_id": "avelo_quebec",
+    "timezone": "America/Montreal",
+    "build_version": "2026.1",
+    "build_label": "2026-03-18",
+    "build_hash": "594cd81",
+    "build_number": "7",
+    "mobile_head_version": "2",
+    "mobile_minimum_supported_version": "1",
+    "phone_number": "418-627-2511",
+    "_vehicle_count": {
+      "_mechanical_count": 2,
+      "_ebike_count": 2655
+    },
+    "_station_count": 149,
+    "email": "Contact par téléphone seulement ",
+    "rental_apps": {
+      "android": {
+        "store_uri": "https://play.google.com/store/apps/details?id=com.publicbikesystem.avelo",
+        "discovery_uri": "https://avelo.page.link/bike"
+      },
+      "ios": {
+        "store_uri": "https://apps.apple.com/us/app/%C3%A0v%C3%A9lo/id1568536819",
+        "discovery_uri": "https://avelo.page.link/bike"
+      }
+    },
+    "language": "en",
+    "name": "avelo-quebec"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "last_updated": 1777131935,
+  "ttl": 60,
+  "version": "1.1",
+  "data": {
+    "stations": [
+      {
+        "station_id": "1",
+        "name": "Place D'Youville",
+        "lat": 46.81306,
+        "lon": -71.21333,
+        "address": "1 rue D'Youville",
+        "capacity": 19,
+        "rental_methods": ["KEY", "CREDITCARD"],
+        "_extra_field": "ignored"
+      },
+      {
+        "station_id": "2",
+        "name": "Parc des Champs-de-Bataille",
+        "lat": 46.79978,
+        "lon": -71.22014,
+        "capacity": 15
+      }
+    ]
+  }
+}

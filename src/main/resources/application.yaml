@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: trackgbfs
+  datasource:
+    url: "${TRACKGBFS_DB_URL:jdbc:sqlite:trackgbfs.db}"
+  sql:
+    init:
+      mode: always
+  jooq:
+    sql-dialect: SQLITE
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+
+trackgbfs:
+  api:
+    cache-ttl: 30s
+  feed:
+    base-url: https://quebec.publicbikesystem.net/customer/ube/gbfs/v1
+    language: en
+  poll:
+    default-min-interval: 24h
+    min-interval:
+      station-status: 2s
+      station-information: 1h
+      system-information: 24h
