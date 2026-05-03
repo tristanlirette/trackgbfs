@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&amp;family=Syncopate:wght@700&amp;display=swap" rel="stylesheet"/>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        [hidden] { display: none !important; }
 
         :root {
             --bg:            #06080d;
@@ -226,6 +227,76 @@
             font-size: 12px;
             letter-spacing: 0.1em;
         }
+
+        /* ── Clickable station ID ── */
+        .station-id-link {
+            color: var(--accent);
+            cursor: pointer;
+            border-bottom: 1px solid transparent;
+            transition: border-color 120ms;
+        }
+
+        .station-id-link:hover { border-bottom-color: var(--accent-dim); }
+
+        /* ── History modal ── */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 32px;
+        }
+
+        .modal {
+            background: var(--surface);
+            border: 1px solid var(--border-head);
+            border-radius: 6px;
+            width: fit-content;
+            max-width: calc(100vw - 64px);
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border-head);
+            flex-shrink: 0;
+        }
+
+        .modal-label {
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-right: 12px;
+        }
+
+        .modal-station-id { font-size: 14px; color: var(--accent); }
+
+        .modal-close {
+            background: transparent;
+            border: 1px solid var(--border-head);
+            color: var(--text-muted);
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 4px 8px;
+            font-family: inherit;
+            transition: color 120ms, border-color 120ms;
+        }
+
+        .modal-close:hover { color: var(--text); border-color: var(--text-muted); }
+
+        .modal-body { overflow: auto; flex: 1; }
+
+        #history-table { min-width: max-content; }
     </style>
 </head>
 <body>
@@ -304,6 +375,37 @@
 
 </div>
 
+<!-- History modal -->
+<div id="history-modal" class="modal-backdrop" hidden="hidden">
+    <div class="modal">
+        <div class="modal-header">
+            <span>
+                <span class="modal-label">STATION HISTORY</span>
+                <span id="modal-station-id" class="modal-station-id"></span>
+            </span>
+            <button class="modal-close" id="modal-close-btn">&#x2715;</button>
+        </div>
+        <div class="modal-body">
+            <table id="history-table">
+                <thead>
+                    <tr>
+                        <th>Bikes Avail</th>
+                        <th>Bikes Disabled</th>
+                        <th>Docks Avail</th>
+                        <th>Docks Disabled</th>
+                        <th>Installed</th>
+                        <th>Renting</th>
+                        <th>Returning</th>
+                        <th>Last Reported (UTC)</th>
+                        <th>Observed At (UTC)</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <script>//<![CDATA[
     // ── Utilities ────────────────────────────────────────────────────────────
 
@@ -335,6 +437,19 @@
                 cell.appendChild(badge);
             }
         });
+    });
+
+    // ── Clickable station IDs (station status, server-rendered) ─────────────
+
+    document.querySelectorAll('#status-table tbody tr').forEach(row => {
+        const cell = row.cells[0];
+        const id = cell.textContent.trim();
+        clearChildren(cell);
+        const link = document.createElement('span');
+        link.className = 'station-id-link';
+        link.textContent = id;
+        link.addEventListener('click', () => openHistory(id));
+        cell.appendChild(link);
     });
 
     // ── Generic table sorter ─────────────────────────────────────────────────
@@ -445,8 +560,16 @@
                 values.forEach((val, ci) => {
                     const td = document.createElement('td');
                     const text = val ?? '';
-                    td.textContent = text;
                     if (text !== '') colHasData[ci] = true;
+                    if (ci === 0 && text !== '') {
+                        const link = document.createElement('span');
+                        link.className = 'station-id-link';
+                        link.textContent = text;
+                        link.addEventListener('click', () => openHistory(text));
+                        td.appendChild(link);
+                    } else {
+                        td.textContent = text;
+                    }
                     tr.appendChild(td);
                 });
                 tbody.appendChild(tr);
@@ -468,6 +591,76 @@
             tbody.appendChild(makeStateRow('Failed to load station information.', true, 12));
         }
     }
+
+    // ── Station history ──────────────────────────────────────────────────────
+
+    const historyCache = {};
+
+    async function openHistory(stationId) {
+        document.getElementById('modal-station-id').textContent = stationId;
+        const modal = document.getElementById('history-modal');
+        modal.hidden = false;
+        const tbody = document.querySelector('#history-table tbody');
+        clearChildren(tbody);
+        if (historyCache[stationId]) {
+            renderHistory(tbody, historyCache[stationId]);
+            return;
+        }
+        tbody.appendChild(makeStateRow('LOADING...', false, 9));
+        try {
+            const resp = await fetch('/station/status/' + encodeURIComponent(stationId) + '/history');
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            const data = await resp.json();
+            historyCache[stationId] = data;
+            clearChildren(tbody);
+            renderHistory(tbody, data);
+        } catch (e) {
+            clearChildren(tbody);
+            tbody.appendChild(makeStateRow('Failed to load history.', true, 9));
+        }
+    }
+
+    function renderHistory(tbody, data) {
+        data.forEach(s => {
+            const tr = document.createElement('tr');
+            [
+                s.num_bikes_available != null ? String(s.num_bikes_available) : '',
+                s.num_bikes_disabled  != null ? String(s.num_bikes_disabled)  : '',
+                s.num_docks_available != null ? String(s.num_docks_available) : '',
+                s.num_docks_disabled  != null ? String(s.num_docks_disabled)  : '',
+            ].forEach(text => {
+                const td = document.createElement('td');
+                td.textContent = text;
+                tr.appendChild(td);
+            });
+            ['is_installed', 'is_renting', 'is_returning'].forEach(field => {
+                const td = document.createElement('td');
+                const badge = document.createElement('span');
+                badge.className = 'badge badge-' + s[field];
+                badge.textContent = String(s[field]);
+                td.appendChild(badge);
+                tr.appendChild(td);
+            });
+            [s.last_reported, s.observed_at].forEach(ts => {
+                const td = document.createElement('td');
+                td.textContent = formatTs(ts);
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        });
+    }
+
+    function closeHistory() {
+        document.getElementById('history-modal').hidden = true;
+    }
+
+    document.getElementById('modal-close-btn').addEventListener('click', closeHistory);
+    document.getElementById('history-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeHistory();
+    });
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeHistory();
+    });
 
     // ── Tab switching ────────────────────────────────────────────────────────
 
