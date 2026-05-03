@@ -3,22 +3,40 @@
 <head>
     <meta charset="UTF-8"/>
     <title>Station Status</title>
+    <style>
+        th button.sort-btn {
+            margin-left: 6px;
+            padding: 2px 7px;
+            background: #334155;
+            border: 1px solid #475569;
+            color: #94a3b8;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            font-family: inherit;
+        }
+        th button.sort-btn.active {
+            background: #2563eb;
+            border-color: #3b82f6;
+            color: #fff;
+        }
+    </style>
 </head>
 <body>
 <h1>Station Status</h1>
-<table>
+<table id="station-table">
     <thead>
         <tr>
-            <th>Station ID</th>
-            <th>Bikes Available</th>
-            <th>Bikes Disabled</th>
-            <th>Docks Available</th>
-            <th>Docks Disabled</th>
-            <th>Installed</th>
-            <th>Renting</th>
-            <th>Returning</th>
-            <th>Last Reported (UTC)</th>
-            <th>Observed At (UTC)</th>
+            <th>Station ID <button class="sort-btn" data-col="0">—</button></th>
+            <th>Bikes Available <button class="sort-btn" data-col="1">—</button></th>
+            <th>Bikes Disabled <button class="sort-btn" data-col="2">—</button></th>
+            <th>Docks Available <button class="sort-btn" data-col="3">—</button></th>
+            <th>Docks Disabled <button class="sort-btn" data-col="4">—</button></th>
+            <th>Installed <button class="sort-btn" data-col="5">—</button></th>
+            <th>Renting <button class="sort-btn" data-col="6">—</button></th>
+            <th>Returning <button class="sort-btn" data-col="7">—</button></th>
+            <th>Last Reported (UTC) <button class="sort-btn" data-col="8">—</button></th>
+            <th>Observed At (UTC) <button class="sort-btn" data-col="9">—</button></th>
         </tr>
     </thead>
     <tbody>
@@ -36,5 +54,62 @@
         </tr>
     </tbody>
 </table>
+<script>
+    const sortOrder = [];
+
+    function toggleColumn(colIndex) {
+        const existing = sortOrder.find(s => s.colIndex === colIndex);
+        if (!existing) {
+            sortOrder.push({ colIndex, dir: 'asc' });
+        } else if (existing.dir === 'asc') {
+            existing.dir = 'desc';
+        } else {
+            sortOrder.splice(sortOrder.indexOf(existing), 1);
+        }
+        renderButtons();
+        applySort();
+    }
+
+    function renderButtons() {
+        document.querySelectorAll('.sort-btn').forEach(btn => {
+            const col = parseInt(btn.dataset.col, 10);
+            const entry = sortOrder.find(s => s.colIndex === col);
+            if (!entry) {
+                btn.textContent = '—';
+                btn.classList.remove('active');
+            } else {
+                const priority = sortOrder.indexOf(entry) + 1;
+                btn.textContent = (entry.dir === 'asc' ? '↑' : '↓') + priority;
+                btn.classList.add('active');
+            }
+        });
+    }
+
+    function applySort() {
+        const tbody = document.querySelector('#station-table tbody');
+        const rows = Array.from(tbody.rows);
+        rows.sort((a, b) => {
+            for (const { colIndex, dir } of sortOrder) {
+                const aText = a.cells[colIndex].textContent.trim();
+                const bText = b.cells[colIndex].textContent.trim();
+                const aNum = parseFloat(aText);
+                const bNum = parseFloat(bText);
+                let cmp;
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                    cmp = aNum - bNum;
+                } else {
+                    cmp = aText.localeCompare(bText);
+                }
+                if (cmp !== 0) return dir === 'asc' ? cmp : -cmp;
+            }
+            return 0;
+        });
+        rows.forEach(row => tbody.appendChild(row));
+    }
+
+    document.querySelectorAll('.sort-btn').forEach(btn => {
+        btn.addEventListener('click', () => toggleColumn(parseInt(btn.dataset.col, 10)));
+    });
+</script>
 </body>
 </html>
