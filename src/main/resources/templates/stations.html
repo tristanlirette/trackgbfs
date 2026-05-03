@@ -407,8 +407,6 @@
 </div>
 
 <script>//<![CDATA[
-    // ── Utilities ────────────────────────────────────────────────────────────
-
     function formatTs(epoch) {
         if (epoch == null) return '';
         const d = new Date(epoch * 1000);
@@ -423,36 +421,36 @@
         while (el.firstChild) el.removeChild(el.firstChild);
     }
 
-    // ── Boolean badge rendering (station status) ─────────────────────────────
+    function makeBadge(val) {
+        const badge = document.createElement('span');
+        badge.className = 'badge badge-' + val;
+        badge.textContent = String(val);
+        return badge;
+    }
+
+    function makeStationIdLink(id) {
+        const link = document.createElement('span');
+        link.className = 'station-id-link';
+        link.textContent = id;
+        link.addEventListener('click', () => openHistory(id));
+        return link;
+    }
 
     document.querySelectorAll('#status-table tbody tr').forEach(row => {
+        const idCell = row.cells[0];
+        const id = idCell.textContent.trim();
+        clearChildren(idCell);
+        idCell.appendChild(makeStationIdLink(id));
+
         [5, 6, 7].forEach(ci => {
             const cell = row.cells[ci];
             const val = cell.textContent.trim();
             if (val === 'true' || val === 'false') {
                 clearChildren(cell);
-                const badge = document.createElement('span');
-                badge.className = 'badge badge-' + val;
-                badge.textContent = val;
-                cell.appendChild(badge);
+                cell.appendChild(makeBadge(val));
             }
         });
     });
-
-    // ── Clickable station IDs (station status, server-rendered) ─────────────
-
-    document.querySelectorAll('#status-table tbody tr').forEach(row => {
-        const cell = row.cells[0];
-        const id = cell.textContent.trim();
-        clearChildren(cell);
-        const link = document.createElement('span');
-        link.className = 'station-id-link';
-        link.textContent = id;
-        link.addEventListener('click', () => openHistory(id));
-        cell.appendChild(link);
-    });
-
-    // ── Generic table sorter ─────────────────────────────────────────────────
 
     function makeTableSorter(tableId) {
         const sortOrder = [];
@@ -515,8 +513,6 @@
 
     const infoSorter = makeTableSorter('info-table');
 
-    // ── Station Information fetch ─────────────────────────────────────────────
-
     let infoLoaded = false;
 
     function makeStateRow(message, isError, colSpan) {
@@ -532,15 +528,15 @@
 
     async function loadStationInformation() {
         const tbody = document.querySelector('#info-table tbody');
+        const ths = document.querySelectorAll('#info-table thead th');
         clearChildren(tbody);
-        tbody.appendChild(makeStateRow('LOADING...', false, 12));
+        tbody.appendChild(makeStateRow('LOADING...', false, ths.length));
         try {
             const resp = await fetch('/station/information');
             if (!resp.ok) throw new Error('HTTP ' + resp.status);
             const data = await resp.json();
             clearChildren(tbody);
-            const COL_COUNT = 12;
-            const colHasData = new Array(COL_COUNT).fill(false);
+            const colHasData = new Array(ths.length).fill(false);
             data.forEach(s => {
                 const tr = document.createElement('tr');
                 const values = [
@@ -562,11 +558,7 @@
                     const text = val ?? '';
                     if (text !== '') colHasData[ci] = true;
                     if (ci === 0 && text !== '') {
-                        const link = document.createElement('span');
-                        link.className = 'station-id-link';
-                        link.textContent = text;
-                        link.addEventListener('click', () => openHistory(text));
-                        td.appendChild(link);
+                        td.appendChild(makeStationIdLink(text));
                     } else {
                         td.textContent = text;
                     }
@@ -574,25 +566,22 @@
                 });
                 tbody.appendChild(tr);
             });
-            // Hide columns with no data in any row
-            const ths = document.querySelectorAll('#info-table thead th');
+            const emptyCols = [];
             ths.forEach((th, ci) => {
-                if (!colHasData[ci]) {
-                    th.style.display = 'none';
-                    tbody.querySelectorAll('tr').forEach(row => {
-                        if (row.cells[ci]) row.cells[ci].style.display = 'none';
-                    });
-                }
+                if (!colHasData[ci]) { th.style.display = 'none'; emptyCols.push(ci); }
             });
+            if (emptyCols.length > 0) {
+                Array.from(tbody.rows).forEach(row => {
+                    emptyCols.forEach(ci => { if (row.cells[ci]) row.cells[ci].style.display = 'none'; });
+                });
+            }
             infoLoaded = true;
             infoSorter.wireButtons();
         } catch (e) {
             clearChildren(tbody);
-            tbody.appendChild(makeStateRow('Failed to load station information.', true, 12));
+            tbody.appendChild(makeStateRow('Failed to load station information.', true, ths.length));
         }
     }
-
-    // ── Station history ──────────────────────────────────────────────────────
 
     const historyCache = {};
 
@@ -635,10 +624,7 @@
             });
             ['is_installed', 'is_renting', 'is_returning'].forEach(field => {
                 const td = document.createElement('td');
-                const badge = document.createElement('span');
-                badge.className = 'badge badge-' + s[field];
-                badge.textContent = String(s[field]);
-                td.appendChild(badge);
+                td.appendChild(makeBadge(s[field]));
                 tr.appendChild(td);
             });
             [s.last_reported, s.observed_at].forEach(ts => {
@@ -661,8 +647,6 @@
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') closeHistory();
     });
-
-    // ── Tab switching ────────────────────────────────────────────────────────
 
     const panels = {
         status:      document.getElementById('panel-status'),
