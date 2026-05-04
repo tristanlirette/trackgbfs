@@ -13,7 +13,7 @@ spring:
 
 trackgbfs:
   api:
-    cache-ttl: 1m
+    cache-ttl: 5m
   feed:
     base-url: https://quebec.publicbikesystem.net/customer/ube/gbfs/v1
     language: en
