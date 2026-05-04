@@ -50,7 +50,9 @@ class StationMapControllerTest {
                 .andExpect(jsonPath("$[0].station_id").value("s1"))
                 .andExpect(jsonPath("$[0].name").value("Station One"))
                 .andExpect(jsonPath("$[0].num_bikes_available").value(3))
-                .andExpect(jsonPath("$[0].is_installed").value(true));
+                .andExpect(jsonPath("$[0].is_installed").value(true))
+                .andExpect(jsonPath("$[0].lat").value(45.5))
+                .andExpect(jsonPath("$[0].lon").value(-73.5));
     }
 
     @Test

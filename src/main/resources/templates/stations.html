@@ -755,6 +755,7 @@
     async function loadMap() {
         if (mapLoaded) return;
         const panel = document.getElementById('panel-map');
+        clearChildren(panel);
         try {
             const resp = await fetch('/station/map');
             if (!resp.ok) throw new Error('HTTP ' + resp.status);
@@ -762,6 +763,7 @@
 
             if (data.length === 0) {
                 panel.appendChild(makeMapPlaceholder('NO STATION DATA', false));
+                mapLoaded = true;
                 return;
             }
 
@@ -786,10 +788,10 @@
                 coords.push([s.lat, s.lon]);
             });
 
+            m.invalidateSize();
             if (coords.length > 0) {
                 m.fitBounds(L.latLngBounds(coords));
             }
-            m.invalidateSize();
             mapLoaded = true;
         } catch (e) {
             panel.appendChild(makeMapPlaceholder('FAILED TO LOAD MAP', true));
