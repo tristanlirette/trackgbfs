@@ -346,9 +346,9 @@
     <span class="topbar-logo">TrackGBFS</span>
     <div class="topbar-sep"></div>
     <nav class="tabs">
-        <button class="tab active" data-tab="status">Station Status</button>
+        <button class="tab active" data-tab="map">Map</button>
+        <button class="tab" data-tab="status">Station Status</button>
         <button class="tab" data-tab="information">Station Information</button>
-        <button class="tab" data-tab="map">Map</button>
     </nav>
     <div class="topbar-live">
         <span class="live-dot"></span>
@@ -359,7 +359,7 @@
 <div class="main">
 
     <!-- Station Status panel -->
-    <div id="panel-status" class="table-wrap">
+    <div id="panel-status" class="table-wrap" hidden="hidden">
         <table id="status-table">
             <thead>
                 <tr>
@@ -416,7 +416,7 @@
     </div>
 
     <!-- Map panel -->
-    <div id="panel-map" class="map-wrap" hidden="hidden"></div>
+    <div id="panel-map" class="map-wrap"></div>
 
 </div>
 
@@ -813,6 +813,8 @@
             }
         });
     });
+
+    loadMap();
 //]]>
 </script>
 
