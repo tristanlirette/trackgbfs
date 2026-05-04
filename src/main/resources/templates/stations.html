@@ -6,6 +6,8 @@
     <title>TrackGBFS</title>
     <link rel="preconnect" href="https://fonts.googleapis.com"/>
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&amp;family=Syncopate:wght@700&amp;display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         [hidden] { display: none !important; }
@@ -228,6 +230,26 @@
             letter-spacing: 0.1em;
         }
 
+        /* ---- Map panel ---- */
+        .map-wrap {
+            height: calc(100vh - 140px);
+            border: 1px solid var(--border-head);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .map-message, .map-error {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            font-size: 12px;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+        }
+
+        .map-error { color: var(--red); }
+
         /* ── Clickable station ID ── */
         .station-id-link {
             color: var(--accent);
@@ -326,6 +348,7 @@
     <nav class="tabs">
         <button class="tab active" data-tab="status">Station Status</button>
         <button class="tab" data-tab="information">Station Information</button>
+        <button class="tab" data-tab="map">Map</button>
     </nav>
     <div class="topbar-live">
         <span class="live-dot"></span>
@@ -391,6 +414,9 @@
             <tbody></tbody>
         </table>
     </div>
+
+    <!-- Map panel -->
+    <div id="panel-map" class="map-wrap" hidden="hidden"></div>
 
 </div>
 
@@ -714,7 +740,61 @@
     const panels = {
         status:      document.getElementById('panel-status'),
         information: document.getElementById('panel-information'),
+        map:         document.getElementById('panel-map'),
     };
+
+    let mapLoaded = false;
+
+    function makeMapPlaceholder(text, isError) {
+        const div = document.createElement('div');
+        div.className = isError ? 'map-error' : 'map-message';
+        div.textContent = text;
+        return div;
+    }
+
+    async function loadMap() {
+        if (mapLoaded) return;
+        const panel = document.getElementById('panel-map');
+        try {
+            const resp = await fetch('/station/map');
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            const data = await resp.json();
+
+            if (data.length === 0) {
+                panel.appendChild(makeMapPlaceholder('NO STATION DATA', false));
+                return;
+            }
+
+            const m = L.map('panel-map');
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(m);
+
+            const coords = [];
+            data.forEach(s => {
+                if (s.lat == null || s.lon == null) return;
+                const color = !s.is_installed ? '#3d5268'
+                            : s.num_bikes_available > 0 ? '#2dd4a0'
+                            : '#f87171';
+                L.circleMarker([s.lat, s.lon], {
+                    color: color,
+                    fillColor: color,
+                    fillOpacity: 0.8,
+                    radius: 8,
+                    weight: 1
+                }).on('click', () => openHistory(s.station_id)).addTo(m);
+                coords.push([s.lat, s.lon]);
+            });
+
+            if (coords.length > 0) {
+                m.fitBounds(L.latLngBounds(coords));
+            }
+            m.invalidateSize();
+            mapLoaded = true;
+        } catch (e) {
+            panel.appendChild(makeMapPlaceholder('FAILED TO LOAD MAP', true));
+        }
+    }
 
     document.querySelectorAll('.tab').forEach(tab => {
         tab.addEventListener('click', () => {
@@ -725,6 +805,9 @@
             panels[target].hidden = false;
             if (target === 'information' && !infoLoaded) {
                 loadStationInformation();
+            }
+            if (target === 'map') {
+                loadMap();
             }
         });
     });
