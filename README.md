@@ -31,9 +31,9 @@ All settings can be overridden via environment variables (Spring relaxed binding
 | `TRACKGBFS_FEED_BASE_URL` | Québec PBSC feed | GBFS v1 feed base URL |
 | `TRACKGBFS_FEED_LANGUAGE` | `en` | Feed language code |
 | `TRACKGBFS_DB_URL` | `jdbc:sqlite:trackgbfs.db` | JDBC URL for the SQLite database |
-| `TRACKGBFS_POLL_MIN_INTERVAL_STATION_STATUS` | `2s` | Minimum polling interval for station status |
+| `TRACKGBFS_POLL_MIN_INTERVAL_STATION_STATUS` | `5s` | Minimum polling interval for station status |
 | `TRACKGBFS_POLL_MIN_INTERVAL_STATION_INFORMATION` | `1h` | Minimum polling interval for station information |
-| `TRACKGBFS_API_CACHE_TTL` | `30s` | API response cache TTL |
+| `TRACKGBFS_API_CACHE_TTL` | `2m` | API response cache TTL |
 
 ## Building
 
