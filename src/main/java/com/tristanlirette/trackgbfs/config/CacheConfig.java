@@ -25,6 +25,8 @@ class CacheConfig {
                 new CaffeineCache("station-history",
                         caffeineWithCapFor(ttl, 200).build()),
                 new CaffeineCache("station-information",
+                        caffeineFor(ttl).build()),
+                new CaffeineCache("station-map",
                         caffeineFor(ttl).build())));
         return manager;
     }
