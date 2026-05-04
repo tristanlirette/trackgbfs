@@ -13,13 +13,13 @@ spring:
 
 trackgbfs:
   api:
-    cache-ttl: 1m
+    cache-ttl: 2m
   feed:
     base-url: https://quebec.publicbikesystem.net/customer/ube/gbfs/v1
     language: en
   poll:
     default-min-interval: 24h
     min-interval:
-      station-status: 2s
+      station-status: 5s
       station-information: 1h
       system-information: 24h
